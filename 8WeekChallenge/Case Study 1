@@ -1,0 +1,22 @@
+/* --------------------
+   Case Study Questions
+   --------------------*/
+
+
+-- 1. What is the total amount each customer spent at the restaurant?
+
+SELECT sal.customer_id, SUM(men.price) AS TotalAmountSpent
+FROM dbo.Sales as sal
+	JOIN dbo.Menu as men
+		ON sal.product_id = men.product_id
+GROUP BY sal.customer_id
+;
+
+
+-- 2. How many days has each customer visited the restaurant?
+
+SELECT customer_id, COUNT(order_date) AS Days_Visited
+FROM dbo.Sales
+GROUP BY customer_id
+;
+
