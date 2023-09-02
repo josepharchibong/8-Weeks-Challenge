@@ -20,3 +20,47 @@ FROM dbo.Sales
 GROUP BY customer_id
 ;
 
+
+
+
+-- 3. What was the first item from the menu purchased by each customer?
+
+WITH ItemOrderbyCustomer AS
+(
+	SELECT product_id, customer_id, order_date, ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY customer_id, order_date) AS item_numbering
+	FROM dbo.Sales
+)
+SELECT customer_id, iobc.product_id, menu.product_name
+FROM ItemOrderbyCustomer as iobc
+	JOIN dbo.Menu as menu
+		ON iobc.product_id = menu.product_id
+WHERE item_numbering = '1'
+;
+
+
+-- 4. What is the most purchased item on the menu and how many times was it purchased by all customers?
+
+SELECT TOP 1 sale.product_id, menu.product_name, COUNT(sale.product_id) AS purchase_count_per_item
+FROM dbo.Sales as sale
+	JOIN dbo.Menu as menu
+		ON sale.product_id = menu.product_id
+GROUP BY sale.product_id, menu.product_name
+ORDER BY purchase_count_per_item DESC
+;
+
+
+-- 5. Which item was the most popular for each customer?
+
+WITH product_rank AS
+(
+	SELECT customer_id, product_id, RANK() OVER (PARTITION BY customer_id ORDER BY COUNT(product_id) DESC, product_id) AS rank
+	FROM dbo.Sales
+	GROUP BY customer_id, product_id
+)
+SELECT customer_id, pror.product_id, menu.product_name
+FROM product_rank as pror
+	JOIN dbo.Menu as menu
+		ON pror.product_id = menu.product_id
+WHERE rank = 1
+;
+
