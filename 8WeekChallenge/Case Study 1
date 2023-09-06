@@ -64,3 +64,39 @@ FROM product_rank as pror
 WHERE rank = 1
 ;
 
+
+-- 6. Which item was purchased first by the customer after they became a member?
+
+WITH date_rank AS
+(
+	SELECT sal.customer_id, order_date, join_date, product_id, RANK() OVER (PARTITION BY sal.customer_id ORDER BY order_date) AS rank
+	FROM dbo.Sales as sal
+		JOIN dbo.Members as mem
+			ON sal.customer_id = mem.customer_id
+	WHERE order_date >= join_date
+)
+SELECT dara.customer_id, menu.product_name
+FROM date_rank as dara
+	JOIN dbo.Menu as menu
+		ON dara.product_id = menu.product_id
+WHERE rank = 1
+;
+
+
+-- 7. Which item was purchased just before the customer became a member?
+
+WITH date_rank AS
+(
+	SELECT sal.customer_id, order_date, join_date, product_id, RANK() OVER (PARTITION BY sal.customer_id ORDER BY order_date DESC, product_id) AS rank
+		FROM dbo.Sales as sal
+			JOIN dbo.Members as mem
+				ON sal.customer_id = mem.customer_id
+	WHERE order_date < join_date
+)
+SELECT dara.customer_id, dara.product_id, menu.product_name
+FROM date_rank as dara
+	JOIN dbo.Menu as menu
+		ON dara.product_id = menu.product_id
+WHERE rank = 1
+;
+
