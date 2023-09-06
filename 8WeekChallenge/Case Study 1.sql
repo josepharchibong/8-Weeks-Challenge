@@ -87,7 +87,7 @@ WHERE rank = 1
 
 WITH date_rank AS
 (
-	SELECT sal.customer_id, order_date, join_date, product_id, RANK() OVER (PARTITION BY sal.customer_id ORDER BY order_date DESC, product_id) AS rank
+	SELECT sal.customer_id, order_date, join_date, product_id, RANK() OVER (PARTITION BY sal.customer_id ORDER BY order_date DESC, product_id, DESC) AS rank
 		FROM dbo.Sales as sal
 			JOIN dbo.Members as mem
 				ON sal.customer_id = mem.customer_id
