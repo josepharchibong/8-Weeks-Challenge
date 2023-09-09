@@ -140,18 +140,23 @@ GROUP BY customer_id
 
 WITH CustomerPointsCTE2 AS
 (
-	SELECT sal.customer_id, sal.product_id, menu.product_name, menu.price, (menu.price*20) AS customer_points
+	SELECT sal.customer_id, sal.product_id, menu.product_name, menu.price,
+		CASE
+			WHEN order_date >= join_date AND order_date <= DATEADD(week, 1, join_date) AND order_date < '20210201'
+				THEN menu.price*20
+			ELSE menu.price*10
+		END AS customer_points
 	FROM dbo.Sales as sal
 			JOIN dbo.Menu as menu
 				ON sal.product_id = menu.product_id
 			JOIN dbo.Members as mem
 				ON sal.customer_id = mem.customer_id
-		WHERE order_date >= join_date AND order_date <= DATEADD(week, 1, join_date) AND order_date < '20210201'
 )
 SELECT customer_id, SUM(customer_points) AS customer_points
 FROM CustomerPointsCTE2
 GROUP BY customer_id
 ;
+
 
 -- Bonus Question 1: Join All Tables; create a column that specifies if a customer was a member at the time of the purchase
 
