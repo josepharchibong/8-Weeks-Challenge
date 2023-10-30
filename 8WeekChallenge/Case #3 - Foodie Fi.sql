@@ -48,3 +48,47 @@ WHERE	customer_id = 1 OR
 ;
 
 
+
+
+-------------------------------------------------------------------------------
+-----------------    SECTION B. Data Analysis Questions    --------------------
+-------------------------------------------------------------------------------
+--1. How many customers has Foodie-Fi ever had?
+SELECT COUNT(*) as total_customers
+FROM 
+(
+	SELECT DISTINCT customer_id
+	FROM dbo.subscriptions
+) as distinct_customer
+;
+
+
+--2. What is the monthly distribution of trial plan start_date values for our dataset - 
+--   use the start of the month as the group by value
+SELECT month_no, month, COUNT(month) as monthly_dist
+FROM
+(
+	SELECT plan_id, start_date, DATEPART(month, start_date) as month_no, DATENAME(month, start_date) as 'month'
+	FROM dbo.subscriptions
+	WHERE plan_id = 0
+) as date_part
+GROUP BY month_no, month
+ORDER BY month_no
+;
+
+
+--3. What plan start_date values occur after the year 2020 for our dataset? Show the 
+--   breakdown by count of events for each plan_name
+SELECT start_year.plan_id, pla.plan_name, COUNT(start_year.plan_id) sub_count
+FROM
+(
+	SELECT *, DATEPART(year, start_date) as year
+	FROM dbo.subscriptions
+) as start_year
+	JOIN dbo.plans as pla
+		ON start_year.plan_id = pla.plan_id
+WHERE year > 2020
+GROUP BY start_year.plan_id, pla.plan_name
+ORDER BY 1
+;
+
