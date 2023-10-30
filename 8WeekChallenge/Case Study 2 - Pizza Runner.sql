@@ -123,3 +123,48 @@ ALTER COLUMN pickup_time datetime
 ;
 
 
+-------------------------------------------------------------------------------
+-------------------     SECTION A: Pizza Metrics   ----------------------------
+-------------------------------------------------------------------------------
+
+--1. How many pizzas were ordered?
+SELECT COUNT(pizza_id) AS pizzas_ordered
+FROM dbo.customer_orders
+;
+
+
+--2. How many unique customer orders were made?
+SELECT COUNT(pizza_id) AS Unique_Orders
+FROM
+(
+	SELECT *
+	FROM dbo.customer_orders
+	WHERE exclusions IS NOT NULL OR extras IS NOT NULL
+) Unique_Orders_Sub
+;
+
+
+--3. How many successful orders were delivered by each runner?
+SELECT runner_id, COUNT(runner_id) AS successful_orders
+FROM dbo.runner_orders
+WHERE cancellation IS NULL
+GROUP BY runner_id
+;
+
+
+--4. How many of each type of pizza was delivered?
+--Changing the data type of pizza_name to nvarchar
+ALTER TABLE pizza_names
+ALTER COLUMN pizza_name nvarchar(20)
+;
+SELECT pizza_name, COUNT(cus.pizza_id) as pizza_count_delivered
+FROM dbo.customer_orders as cus
+	JOIN dbo.pizza_names as piz
+		ON cus.pizza_id = piz.pizza_id
+	JOIN dbo.runner_orders as run
+		ON cus.order_id = run.order_id
+WHERE run.cancellation IS NULL
+GROUP BY pizza_name
+;
+
+
