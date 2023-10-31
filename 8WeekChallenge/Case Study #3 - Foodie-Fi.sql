@@ -92,3 +92,63 @@ GROUP BY start_year.plan_id, pla.plan_name
 ORDER BY 1
 ;
 
+
+--4. What is the customer count and percentage of customers who have churned rounded to 1 decimal place?
+SELECT *, ROUND((CAST(churned_customers as float)/CAST(total_customers as float) * 100), 1) churned_percent
+FROM
+(
+	SELECT	COUNT(
+				CASE
+					WHEN plan_id = 0
+						THEN customer_id
+				END) total_customers,
+			COUNT(
+				CASE
+					WHEN plan_id = 4
+					THEN customer_id
+				END) churned_customers
+	FROM dbo.subscriptions
+) as customer_count
+;
+
+
+--5. How many customers have churned straight after their initial free trial - what percentage is this rounded to the nearest whole number?
+SELECT *, ROUND((CAST(churned_customers_2 as float)/CAST(total_customers as float) * 100), 0) as churned_percent
+FROM
+(
+	SELECT	COUNT(
+				CASE
+					WHEN plan_id = 0
+						THEN customer_id
+				END) total_customers,
+			COUNT(
+				CASE
+					WHEN plan_id = 4 AND cust_rank = 2
+						THEN customer_id
+				END) churned_customers_2
+	FROM
+	(
+		SELECT *, RANK() OVER (PARTITION BY customer_id ORDER BY start_date) AS cust_rank
+		FROM dbo.subscriptions
+	) as customer_rank
+) as customer_count_2
+;
+
+
+--6. What is the number and percentage of customer plans after their initial free trial?
+SELECT *, ROUND(CAST(subsequent_subscription as float)/CAST(total_subscriptions as float) * 100, 2) as subsequent_percent
+FROM
+(
+	SELECT	COUNT(*) AS total_subscriptions,
+			COUNT(	
+				CASE
+					WHEN cust_rank > 1
+						THEN customer_id
+				END) subsequent_subscription
+	FROM
+	(
+		SELECT *, RANK() OVER (PARTITION BY customer_id ORDER BY start_date) AS cust_rank
+		FROM dbo.subscriptions
+	) as customer_rank
+) as plans_subquery
+;
