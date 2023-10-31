@@ -168,3 +168,64 @@ GROUP BY pizza_name
 ;
 
 
+--5. How many Vegetarian and Meatlovers were ordered by each customer?
+WITH rowrankCTE AS 
+(
+	SELECT	customer_id, 
+			pizza_name, 
+			cus.pizza_id, 
+			RANK() OVER (PARTITION BY customer_id, cus.pizza_id ORDER BY customer_id) as rowrank
+	FROM dbo.customer_orders as cus
+		JOIN dbo.pizza_names as piz
+			ON cus.pizza_id = piz.pizza_id
+) 
+SELECT customer_id, pizza_name, COUNT(rowrank) AS order_count
+FROM rowrankCTE 
+GROUP BY customer_id, pizza_name
+ORDER BY customer_id
+;
+
+
+--6. What was the maximum number of pizzas delivered in a single order?
+WITH pizza_delivered_CTE AS
+(
+	SELECT run.order_id, COUNT(run.order_id) AS order_count
+	FROM dbo.runner_orders as run
+		JOIN dbo.customer_orders as cus
+			ON run.order_id = cus.order_id
+	WHERE run.cancellation IS NULL
+	GROUP BY run.order_id
+)
+SELECT MAX(order_count) AS max_order_count
+FROM pizza_delivered_CTE
+;
+
+
+--7. For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
+--Delivered pizzas with atleast 1 change
+	WITH Atleast_1_Change AS
+	(
+		SELECT customer_id, cus.order_id, exclusions, extras
+		FROM customer_orders as cus
+			JOIN dbo.runner_orders as run
+				ON cus.order_id = run.order_id
+		WHERE (exclusions IS NOT NULL OR extras IS NOT NULL) AND run.cancellation IS NULL
+	)	
+	SELECT customer_id,  COUNT(*) AS order_count
+	FROM Atleast_1_Change
+	GROUP BY customer_id
+;
+--Delivered pizzas with no change
+	WITH No_Change AS
+	(
+		SELECT customer_id, cus.order_id, exclusions, extras
+		FROM customer_orders as cus
+			JOIN dbo.runner_orders as run
+				ON cus.order_id = run.order_id
+		WHERE (exclusions IS NULL AND extras IS NULL) AND run.cancellation IS NULL
+	)	
+	SELECT customer_id,  COUNT(*) AS order_count
+	FROM No_Change
+	GROUP BY customer_id
+;
+
