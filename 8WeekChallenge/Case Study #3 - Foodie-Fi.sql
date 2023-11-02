@@ -152,3 +152,51 @@ FROM
 	) as customer_rank
 ) as plans_subquery
 ;
+
+
+--7. What is the customer count and percentage breakdown of all 5 plan_name values at 2020-12-31?
+SELECT	*, ROUND((CAST(customers_count as float) * 100)/SUM(customers_count) OVER (), 2) as plan_percent
+FROM
+(
+	SELECT sub.plan_id, plan_name, COUNT(*) AS customers_count
+	FROM dbo.subscriptions as sub
+		JOIN dbo.plans as pla
+			ON sub.plan_id = pla.plan_id
+	WHERE start_date <= '2020-12-31'
+	GROUP BY sub.plan_id, plan_name
+) as date_filter
+ORDER BY 1
+;
+
+
+--8. How many customers have upgraded to an annual plan in 2020?
+SELECT COUNT(*) as pro_annual_customers
+FROM dbo.subscriptions
+WHERE DATEPART(year, start_date) = 2020 AND plan_id = 3
+;
+
+
+--9. How many days on average does it take for a customer to an annual plan from the day they join Foodie-Fi?
+WITH Start_Date_CTE AS
+(
+	SELECT *
+	FROM dbo.subscriptions
+	WHERE plan_id = 0 
+),
+Date_Difference_CTE AS
+(
+	SELECT	sub.customer_id, 
+			sub.plan_id, 
+			sta.start_date, 
+			sub.start_date as end_date, 
+			DATEDIFF(day, sta.start_date, sub.start_date) as date_diff
+		FROM dbo.subscriptions as sub
+			JOIN Start_Date_CTE as sta
+				ON sub.customer_id = sta.customer_id
+		WHERE sub.plan_id = 3
+)
+SELECT *--	AVG(date_diff) as avg_date_diff
+FROM Date_Difference_CTE
+ORDER BY 3
+;
+
